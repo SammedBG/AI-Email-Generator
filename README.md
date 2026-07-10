@@ -15,7 +15,7 @@ Built as part of the Full Stack AI Developer assignment, updated with advanced f
 - **Error Handling**: Comprehensive backend error catching with graceful offline mode, and visual red-banner errors on the frontend.
 
 **Bonus Features Implemented**
-- **Authentication (JWT & httpOnly Cookies)**: Register and log in. User sessions are securely stored using `httpOnly` cookies (avoiding `localStorage` for improved security). Routes and history lists are separated and protected per-user.
+- **Authentication (JWT Bearer Tokens)**: Register and log in. User sessions are managed using JWT tokens sent via `Authorization: Bearer` headers, ensuring reliable cross-origin authentication across all browsers. Routes and history are protected per-user.
 - **Multiple AI Model Support**: Dropdown selector supporting **Llama 3.1 8B Instant** (priority model) and **Llama 3.3 70B Versatile**.
 - **Rich Text Editor**: Integrated `react-quill` inside an "Edit Your Email" card. Allows users to format, add headers/lists, and refine the email before copying.
 - **MongoDB Persistence**: Integrates with a MongoDB database to persist registered user accounts and prompt histories across restarts. **Graceful offline fallback**: if MongoDB is down, the backend automatically detects it and falls back to in-memory dictionaries so the app remains fully functional.
@@ -33,7 +33,7 @@ Built as part of the Full Stack AI Developer assignment, updated with advanced f
 | **Frontend** | React, Vanilla CSS (custom properties), Lucide Icons, React Quill |
 | **Backend** | FastAPI (Python) |
 | **Database** | MongoDB (via `motor` asynchronous driver) with automatic fallback |
-| **Authentication** | JWT (JSON Web Tokens), `httpOnly` secure session cookies, `bcrypt` password hashing |
+| **Authentication** | JWT (JSON Web Tokens), Bearer token authorization, `bcrypt` password hashing |
 | **Inference API** | Groq API — Llama 3.1 8B Instant (priority) & Llama 3.3 70B Versatile |
 
 ---
@@ -62,7 +62,7 @@ ai-email-generator/
 ├── frontend/
 │   ├── package.json         # Package configuration
 │   ├── postcss.config.js    # PostCSS configs
-│   ├── tailwind.config.js   # Tailwind configs (retained but unused)
+│   ├── tailwind.config.js   # Tailwind configuration
 │   ├── public/
 │   │   └── index.html       # Inter font setup and mount point
 │   ├── src/
@@ -133,10 +133,10 @@ Frontend will run at `http://localhost:3000`.
 ### Authentication
 | Method | Endpoint | Description |
 |---|---|---|
-| POST | `/auth/register` | Create an account (returns JWT as httpOnly cookie) |
-| POST | `/auth/login` | Authenticate user (returns JWT as httpOnly cookie) |
-| POST | `/auth/logout` | Clear the session cookie |
-| GET | `/auth/me` | Fetch active user information (requires cookie validation) |
+| POST | `/auth/register` | Create an account (returns JWT token in response body) |
+| POST | `/auth/login` | Authenticate user (returns JWT token in response body) |
+| POST | `/auth/logout` | Clear the session |
+| GET | `/auth/me` | Fetch active user information (requires Bearer token) |
 
 ### Email Generation
 | Method | Endpoint | Description | Requires Auth? |
@@ -151,7 +151,7 @@ Frontend will run at `http://localhost:3000`.
 ## 🧠 Design Decisions
 
 - **Direct Bcrypt Hashing**: Implemented hashing using the standard `bcrypt` module directly in Python. This bypasses the known `passlib` version check issue on Windows, resulting in a reliable runtime.
-- **httpOnly Cookies**: Sessions are stored in secure browser cookies rather than `localStorage` to guard against Cross-Site Scripting (XSS) token theft.
+- **Bearer Token Auth**: JWT tokens are returned in the response body and sent via `Authorization: Bearer` headers. This approach was chosen because the frontend (Vercel) and backend (Render) are on separate domains — modern desktop browsers block cross-origin cookies, making Bearer tokens the reliable industry-standard solution.
 - **Database Fallback Resilience**: Connection status is checked asynchronously at startup. If MongoDB is down, the server warns you but continues running by caching accounts and histories in-memory.
 - **Structured LLM Parsing**: The prompt structure instructs the model to return `SUBJECT:` and `BODY:` demarcators. The backend parses this structure using regular expressions, falling back to heuristic subject-line generation if the LLM output is free-form.
 
