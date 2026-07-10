@@ -22,7 +22,7 @@ Built as part of the Full Stack AI Developer assignment, updated with advanced f
 - **Email Subject Generation**: Auto-generates matching subject lines alongside the email body.
 - **Copy-to-Clipboard**: Copy buttons for both the raw generated email and the rich-text formatted output.
 - **Quick Example Chips**: Interactive example prompts to populate the composer instantly.
-- **Keyboard Shortcuts**: Generate emails using `Ctrl / ⌘ + Enter` inside the composer.
+
 
 ---
 
