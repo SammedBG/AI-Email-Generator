@@ -1,27 +1,28 @@
 # AI Email Generator
 
-An AI-powered web application that generates professional emails from a simple prompt. Users describe what they need (e.g. *"Write a follow-up email after an interview"*), pick a tone, and the app generates a complete email with a subject line and body using an LLM.
+An AI-powered web application that generates professional emails from a simple prompt. Users describe what they need (e.g. *"Write a follow-up email after an interview"*), pick a tone, select an AI model, and the app generates a complete email with a subject line and body using an LLM.
 
-Built as part of the Full Stack AI Developer assignment.
+Built as part of the Full Stack AI Developer assignment, updated with advanced features.
 
 ---
 
 ## ✨ Features
 
-**Core**
-- Prompt-based email generation using Groq's Llama 3.1 8B model, with a deterministic fallback when no API key is configured
-- Tone selector — Professional, Friendly, Formal, Casual
-- Clean, responsive UI with loading and error states
-- Proper backend error handling for failed API calls
-- Modular backend package structure for easier maintenance
+**Core Features**
+- **AI Email Generation**: Prompt-based email generation using Groq's active models, with a deterministic template fallback when offline or no API key is configured.
+- **Tone Selector**: Supports Professional, Friendly, Formal, and Casual tones.
+- **Design System**: A custom-built, modern light-theme UI using a single-column layout, optimized typography (Inter), and premium animations (shimmer loading skeletons, custom transitions). Fully responsive down to mobile.
+- **Error Handling**: Comprehensive backend error catching with graceful offline mode, and visual red-banner errors on the frontend.
 
-**Bonus**
-- Copy-to-clipboard for generated emails
-- Auto-generated subject line alongside the email body
-- Streaming response endpoint (`/generate/stream`) for real-time token-by-token generation
-- Prompt history tracking (in-memory, via `/history` endpoint)
-- Quick example prompts to get started fast
-- Prompt history shown in the UI for quick reuse
+**Bonus Features Implemented**
+- **Authentication (JWT & httpOnly Cookies)**: Register and log in. User sessions are securely stored using `httpOnly` cookies (avoiding `localStorage` for improved security). Routes and history lists are separated and protected per-user.
+- **Multiple AI Model Support**: Dropdown selector supporting **Llama 3.1 8B Instant** (priority model) and **Llama 3.3 70B Versatile**.
+- **Rich Text Editor**: Integrated `react-quill` inside an "Edit Your Email" card. Allows users to format, add headers/lists, and refine the email before copying.
+- **MongoDB Persistence**: Integrates with a MongoDB database to persist registered user accounts and prompt histories across restarts. **Graceful offline fallback**: if MongoDB is down, the backend automatically detects it and falls back to in-memory dictionaries so the app remains fully functional.
+- **Email Subject Generation**: Auto-generates matching subject lines alongside the email body.
+- **Copy-to-Clipboard**: Copy buttons for both the raw generated email and the rich-text formatted output.
+- **Quick Example Chips**: Interactive example prompts to populate the composer instantly.
+- **Keyboard Shortcuts**: Generate emails using `Ctrl / ⌘ + Enter` inside the composer.
 
 ---
 
@@ -29,10 +30,11 @@ Built as part of the Full Stack AI Developer assignment.
 
 | Layer | Technology |
 |---|---|
-| Frontend | React, Tailwind CSS, Axios, Lucide Icons |
-| Backend | FastAPI (Python) |
-| AI Model | Groq API — Llama 3.1 8B Instant, with fallback mode |
-| Deployment | Vercel (frontend) + Render (backend) |
+| **Frontend** | React, Vanilla CSS (custom properties), Lucide Icons, React Quill |
+| **Backend** | FastAPI (Python) |
+| **Database** | MongoDB (via `motor` asynchronous driver) with automatic fallback |
+| **Authentication** | JWT (JSON Web Tokens), `httpOnly` secure session cookies, `bcrypt` password hashing |
+| **Inference API** | Groq API — Llama 3.1 8B Instant (priority) & Llama 3.3 70B Versatile |
 
 ---
 
@@ -42,32 +44,39 @@ Built as part of the Full Stack AI Developer assignment.
 ai-email-generator/
 ├── backend/
 │   ├── main.py              # FastAPI app entrypoint
-│   ├── app/
-│   │   ├── config.py        # Environment and model settings
-│   │   ├── schemas.py       # Request/response models
-│   │   ├── server.py        # FastAPI app factory
-│   │   ├── routers/
-│   │   │   └── email.py     # API routes
-│   │   └── services/
-│   │       └── email_generation.py  # AI and fallback logic
 │   ├── requirements.txt     # Python dependencies
-│   └── .env.example         # Environment variable template
+│   ├── .env                 # Environment variables
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── config.py        # Environment, model settings, and JWT config
+│   │   ├── database.py      # Async MongoDB setup (with connection checker)
+│   │   ├── schemas.py       # Pydantic request/response & auth schemas
+│   │   ├── server.py        # FastAPI app factory with CORS middleware configuration
+│   │   ├── routers/
+│   │   │   ├── __init__.py
+│   │   │   ├── auth.py      # Auth routes (register, login, logout, me)
+│   │   │   └── email.py     # Email routes (models, generate, stream, history)
+│   │   └── services/
+│   │       ├── auth.py      # Direct bcrypt hashing, JWT validation
+│   │       └── email_generation.py  # LLM completion & fallback template parsing
 ├── frontend/
-│   ├── src/
-│   │   ├── App.js           # State container / page shell
-│   │   └── components/
-│   │       ├── EmailHeader.js
-│   │       ├── GeneratedEmailCard.js
-│   │       ├── PromptComposer.js
-│   │       └── PromptHistory.js
-│   │   ├── index.js         # React entry point
-│   │   └── index.css        # Tailwind styles
+│   ├── package.json         # Package configuration
+│   ├── postcss.config.js    # PostCSS configs
+│   ├── tailwind.config.js   # Tailwind configs (retained but unused)
 │   ├── public/
-│   │   └── index.html
-│   ├── package.json
-│   ├── tailwind.config.js
-│   └── postcss.config.js
-└── README.md
+│   │   └── index.html       # Inter font setup and mount point
+│   ├── src/
+│   │   ├── App.js           # Main state container and protected route shell
+│   │   ├── index.js         # React renderer entry point
+│   │   ├── index.css        # Vanilla CSS design system
+│   │   └── components/
+│   │       ├── AuthModal.js         # Register/login dialog
+│   │       ├── EmailHeader.js       # App logo & logout controls
+│   │       ├── PromptComposer.js    # Prompt textarea, model dropdown, tone row
+│   │       ├── GeneratedEmailCard.js # Preview block & rich text container
+│   │       ├── RichTextEditor.js    # Quill rich text box wrapper
+│   │       └── PromptHistory.js     # User prompt history list
+└── README.md                # Documentation file
 ```
 
 ---
@@ -77,7 +86,8 @@ ai-email-generator/
 ### Prerequisites
 - Python 3.9+
 - Node.js 18+
-- A free Groq API key ([console.groq.com](https://console.groq.com))
+- MongoDB (Optional — if running locally on `mongodb://localhost:27017` or Atlas. The app will gracefully fall back to in-memory mode if offline)
+- A Groq API key ([console.groq.com](https://console.groq.com))
 
 ### 1. Clone the repository
 ```bash
@@ -95,20 +105,21 @@ pip install -r requirements.txt
 
 # Set up environment variables
 cp .env.example .env
-# Edit .env and add your GROQ_API_KEY for live AI generation
-# Optional: set AI_PROVIDER=mock to force the offline fallback mode
+# Edit .env and add your GROQ_API_KEY
+# Optional: set MONGODB_URL=mongodb://localhost:27017 or Atlas connection string
+# Optional: set JWT_SECRET to a custom string
 
 # Run the server
 uvicorn main:app --reload
 ```
-Backend will run at `http://localhost:8000`. Visit `http://localhost:8000/docs` for interactive API documentation (auto-generated by FastAPI).
+Backend will run at `http://localhost:8000`. You can visit `http://localhost:8000/docs` for the interactive Swagger API documentation.
 
 ### 3. Frontend Setup
 ```bash
-cd frontend
+cd ../frontend
 npm install
 
-# Create a .env file with:
+# Create a .env file if changing the API URL:
 # REACT_APP_API_URL=http://localhost:8000
 
 npm start
@@ -119,55 +130,30 @@ Frontend will run at `http://localhost:3000`.
 
 ## 🔌 API Endpoints
 
+### Authentication
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/` | Health check |
-| GET | `/health` | Detailed health status (includes provider + model info) |
-| POST | `/generate` | Generate an email (returns subject + body as JSON) |
-| POST | `/generate/stream` | Generate an email with streaming (token-by-token) response |
-| GET | `/history` | Get recent prompt history |
+| POST | `/auth/register` | Create an account (returns JWT as httpOnly cookie) |
+| POST | `/auth/login` | Authenticate user (returns JWT as httpOnly cookie) |
+| POST | `/auth/logout` | Clear the session cookie |
+| GET | `/auth/me` | Fetch active user information (requires cookie validation) |
 
-**Example request to `/generate`:**
-```json
-{
-  "prompt": "Write a follow-up email after an interview",
-  "tone": "Professional"
-}
-```
-
-**Example response:**
-```json
-{
-  "subject": "Follow-Up: Thank You for the Opportunity",
-  "body": "Dear [Hiring Manager], ..."
-}
-```
+### Email Generation
+| Method | Endpoint | Description | Requires Auth? |
+|---|---|---|---|
+| GET | `/models` | List available Groq LLM models | No |
+| POST | `/generate` | Generate email (returns subject + body) | **Yes** |
+| POST | `/generate/stream` | Generate email via streaming (real-time plain text tokens) | **Yes** |
+| GET | `/history` | Fetch the recent 20 prompt histories for the logged-in user | **Yes** |
 
 ---
 
 ## 🧠 Design Decisions
 
-- **Groq over OpenAI**: Chosen for very fast inference speed, which keeps the app feeling responsive, and a generous free tier suitable for a demo/assignment project.
-- **Structured prompt engineering**: The backend wraps the user's raw prompt with tone instructions and a strict output format (`SUBJECT:` / `BODY:`) so the response can be reliably parsed into structured JSON for the frontend, rather than relying on free-form text.
-- **Separate streaming endpoint**: Kept `/generate` (simple JSON response) separate from `/generate/stream` (real-time streaming) so the frontend can choose the right one depending on the UX needed, without complicating the main response model.
-- **In-memory history**: Used for simplicity within the assignment scope; in a production system this would be persisted to a database (MongoDB/PostgreSQL) so it survives server restarts.
-- **Fallback mode**: If the API key is missing, the app still returns a deterministic template-based email so reviewers can exercise the full workflow without external setup.
-
----
-
-## 🔮 Future Improvements
-
-- Persist prompt history to a database instead of in-memory storage
-- Add user authentication so history is per-user
-- Support multiple LLM providers with automatic fallback (similar to a multi-tier retry system)
-- Add a rich text editor for post-generation editing
-- Deploy with proper environment-based CORS restrictions
-
----
-
-## 📹 Demo
-
-See attached demo video / screenshots for a walkthrough of the application.
+- **Direct Bcrypt Hashing**: Implemented hashing using the standard `bcrypt` module directly in Python. This bypasses the known `passlib` version check issue on Windows, resulting in a reliable runtime.
+- **httpOnly Cookies**: Sessions are stored in secure browser cookies rather than `localStorage` to guard against Cross-Site Scripting (XSS) token theft.
+- **Database Fallback Resilience**: Connection status is checked asynchronously at startup. If MongoDB is down, the server warns you but continues running by caching accounts and histories in-memory.
+- **Structured LLM Parsing**: The prompt structure instructs the model to return `SUBJECT:` and `BODY:` demarcators. The backend parses this structure using regular expressions, falling back to heuristic subject-line generation if the LLM output is free-form.
 
 ---
 
