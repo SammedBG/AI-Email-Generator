@@ -40,11 +40,11 @@ def list_models():
 
 
 @router.post("/generate", response_model=EmailResponse)
-def generate_email_route(request: EmailRequest, username: str = Depends(get_current_user)):
+async def generate_email_route(request: EmailRequest, username: str = Depends(get_current_user)):
     if not request.prompt or not request.prompt.strip():
         raise HTTPException(status_code=400, detail="Prompt cannot be empty")
 
-    return generate_email(request, username)
+    return await generate_email(request, username)
 
 
 @router.post("/generate/stream")
@@ -56,5 +56,5 @@ def generate_email_stream(request: EmailRequest, username: str = Depends(get_cur
 
 
 @router.get("/history")
-def get_history_route(username: str = Depends(get_current_user)):
-    return {"history": get_history(username)}
+async def get_history_route(username: str = Depends(get_current_user)):
+    return {"history": await get_history(username)}

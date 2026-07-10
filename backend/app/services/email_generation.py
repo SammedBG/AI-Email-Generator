@@ -19,6 +19,8 @@ TONE_INSTRUCTIONS = {
 
 client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
+from app.database import history_collection, is_mongodb_available
+
 # Per-user history: {username: [HistoryItem dicts]}
 user_history: dict[str, list[dict]] = {}
 
@@ -143,34 +145,47 @@ def build_response(subject: str, body: str, provider: str, model: str) -> EmailR
     )
 
 
-def append_history(response: EmailResponse, request: EmailRequest, username: str) -> None:
-    if username not in user_history:
-        user_history[username] = []
+async def append_history(response: EmailResponse, request: EmailRequest, username: str) -> None:
+    item = HistoryItem(
+        prompt=request.prompt.strip(),
+        tone=get_tone(request.tone),
+        subject=response.subject,
+        provider=response.provider,
+        model=response.model,
+        created_at=datetime.now(timezone.utc).isoformat(),
+    ).model_dump()
 
-    user_history[username].append(
-        HistoryItem(
-            prompt=request.prompt.strip(),
-            tone=get_tone(request.tone),
-            subject=response.subject,
-            provider=response.provider,
-            model=response.model,
-            created_at=datetime.now(timezone.utc).isoformat(),
-        ).model_dump()
-    )
+    if await is_mongodb_available():
+        item["username"] = username.lower()
+        await history_collection.insert_one(item)
+    else:
+        if username not in user_history:
+            user_history[username] = []
+        user_history[username].append(item)
 
 
-def get_history(username: str) -> list[dict]:
+async def get_history(username: str) -> list[dict]:
+    if await is_mongodb_available():
+        cursor = history_collection.find({"username": username.lower()}).sort("created_at", -1).limit(20)
+        items = await cursor.to_list(length=20)
+        # Reverse to return chronological order (oldest to newest)
+        items.reverse()
+        # MongoDB documents contain _id which is ObjectId (not serializable to JSON), we remove it or convert to string.
+        for item in items:
+            if "_id" in item:
+                item["_id"] = str(item["_id"])
+        return items
     return user_history.get(username, [])[-20:]
 
 
-def generate_email(request: EmailRequest, username: str) -> EmailResponse:
+async def generate_email(request: EmailRequest, username: str) -> EmailResponse:
     provider = resolve_provider()
     model = resolve_model(request.model)
     full_prompt = build_prompt(request.prompt, request.tone)
 
     if provider != "groq":
         response = compose_fallback_email(request, model)
-        append_history(response, request, username)
+        await append_history(response, request, username)
         return response
 
     try:
@@ -183,11 +198,11 @@ def generate_email(request: EmailRequest, username: str) -> EmailResponse:
         raw_text = completion.choices[0].message.content or ""
         subject, body = parse_email_response(raw_text)
         response = build_response(subject, body, provider, model)
-        append_history(response, request, username)
+        await append_history(response, request, username)
         return response
     except Exception:
         response = compose_fallback_email(request, model)
-        append_history(response, request, username)
+        await append_history(response, request, username)
         return response
 
 

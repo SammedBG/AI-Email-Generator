@@ -1,78 +1,23 @@
-import bcrypt
-from datetime import datetime, timedelta, timezone
+"""FastAPI application factory."""
 
-from jose import JWTError, jwt
-from fastapi import Cookie, HTTPException, status
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-from app.config import JWT_ALGORITHM, JWT_EXPIRE_MINUTES, JWT_SECRET
-
-# In-memory user store: {username: bytes (hashed_password)}
-users_db: dict[str, bytes] = {}
+from app.routers.auth import router as auth_router
+from app.routers.email import router as email_router
 
 
-def hash_password(password: str) -> bytes:
-    # bcrypt expects bytes for both password and salt
-    salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode("utf-8"), salt)
+def create_app() -> FastAPI:
+    app = FastAPI(title="AI Email Generator API")
 
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:3000"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
-def verify_password(plain: str, hashed: bytes) -> bool:
-    return bcrypt.checkpw(plain.encode("utf-8"), hashed)
-
-
-def create_token(username: str) -> str:
-    expire = datetime.now(timezone.utc) + timedelta(minutes=JWT_EXPIRE_MINUTES)
-    payload = {"sub": username, "exp": expire}
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
-
-
-def decode_token(token: str) -> str | None:
-    """Decode JWT and return the username, or None if invalid."""
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        return payload.get("sub")
-    except JWTError:
-        return None
-
-
-def register_user(username: str, password: str) -> str:
-    """Register a new user. Returns the JWT token."""
-    if username.lower() in users_db:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Username already taken",
-        )
-
-    users_db[username.lower()] = hash_password(password)
-    return create_token(username.lower())
-
-
-def login_user(username: str, password: str) -> str:
-    """Authenticate user. Returns the JWT token."""
-    stored_hash = users_db.get(username.lower())
-
-    if not stored_hash or not verify_password(password, stored_hash):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid username or password",
-        )
-
-    return create_token(username.lower())
-
-
-def get_current_user(access_token: str | None = Cookie(default=None)) -> str:
-    """FastAPI dependency — extracts username from the httpOnly cookie."""
-    if not access_token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated — please log in",
-        )
-
-    username = decode_token(access_token)
-    if not username:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Session expired — please log in again",
-        )
-
-    return username
+    app.include_router(auth_router)
+    app.include_router(email_router)
+    return app
