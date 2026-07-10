@@ -147,11 +147,6 @@ function App() {
     }
   };
 
-  const handleKeyDown = (event) => {
-    if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
-      handleGenerate();
-    }
-  };
 
   const handleLogout = async () => {
     try {
@@ -215,7 +210,6 @@ function App() {
           setError("");
           setResult(null);
         }}
-        onKeyDown={handleKeyDown}
       />
 
       <GeneratedEmailCard

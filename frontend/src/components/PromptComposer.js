@@ -30,7 +30,6 @@ export function PromptComposer({
         id="prompt-input"
         value={prompt}
         onChange={(e) => onPromptChange(e.target.value)}
-        onKeyDown={onKeyDown}
         placeholder="e.g. Write a follow-up email after a job interview"
         className="prompt-textarea"
       />
@@ -106,10 +105,6 @@ export function PromptComposer({
           Clear
         </button>
       </div>
-
-      <p className="shortcut-hint">
-        Press <kbd>Ctrl / ⌘ + Enter</kbd> to generate.
-      </p>
 
       {error && (
         <div className="error-msg">
