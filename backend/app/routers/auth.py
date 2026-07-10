@@ -26,14 +26,14 @@ def _set_token_cookie(response: Response, token: str) -> None:
 async def register(request: RegisterRequest, response: Response):
     token = await register_user(request.username, request.password)
     _set_token_cookie(response, token)
-    return TokenResponse(message="Account created successfully", username=request.username.lower())
+    return TokenResponse(message="Account created successfully", username=request.username.lower(), token=token)
 
 
 @router.post("/login", response_model=TokenResponse)
 async def login(request: LoginRequest, response: Response):
     token = await login_user(request.username, request.password)
     _set_token_cookie(response, token)
-    return TokenResponse(message="Logged in successfully", username=request.username.lower())
+    return TokenResponse(message="Logged in successfully", username=request.username.lower(), token=token)
 
 
 @router.post("/logout")

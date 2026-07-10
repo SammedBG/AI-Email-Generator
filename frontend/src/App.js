@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { EmailHeader } from "./components/EmailHeader";
 import { PromptComposer } from "./components/PromptComposer";
 import { GeneratedEmailCard } from "./components/GeneratedEmailCard";
@@ -24,6 +24,16 @@ const DEFAULT_MODELS = [
   { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B Instant", description: "" },
 ];
 
+/* Helper to build headers with Authorization Bearer token */
+function authHeaders(extraHeaders = {}) {
+  const token = localStorage.getItem("auth_token");
+  const headers = { ...extraHeaders };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
 function App() {
   const [user, setUser] = useState(null);
   const [authChecking, setAuthChecking] = useState(true);
@@ -39,14 +49,25 @@ function App() {
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(true);
 
-  // Check if user is already authenticated via cookie
+  // Check if user is already authenticated via stored token
   useEffect(() => {
     const checkAuth = async () => {
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        setAuthChecking(false);
+        return;
+      }
       try {
-        const res = await fetch(`${API_URL}/auth/me`, { credentials: "include" });
+        const res = await fetch(`${API_URL}/auth/me`, {
+          headers: authHeaders(),
+          credentials: "include",
+        });
         if (res.ok) {
           const data = await res.json();
           setUser(data.username);
+        } else {
+          // Token expired or invalid — clear it
+          localStorage.removeItem("auth_token");
         }
       } catch (_err) {
         /* not authenticated */
@@ -76,19 +97,12 @@ function App() {
     fetchModels();
   }, []);
 
-  // Load history when user logs in
-  useEffect(() => {
-    if (user) {
-      loadHistory();
-    } else {
-      setHistory([]);
-      setHistoryLoading(false);
-    }
-  }, [user]);
-
-  const loadHistory = async () => {
+  const loadHistory = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/history`, { credentials: "include" });
+      const res = await fetch(`${API_URL}/history`, {
+        headers: authHeaders(),
+        credentials: "include",
+      });
       if (res.ok) {
         const data = await res.json();
         setHistory(data.history || []);
@@ -98,6 +112,24 @@ function App() {
     } finally {
       setHistoryLoading(false);
     }
+  }, []);
+
+  // Load history when user logs in
+  useEffect(() => {
+    if (user) {
+      loadHistory();
+    } else {
+      setHistory([]);
+      setHistoryLoading(false);
+    }
+  }, [user, loadHistory]);
+
+  /* Called by AuthModal on successful login/register */
+  const handleAuth = (username, token) => {
+    if (token) {
+      localStorage.setItem("auth_token", token);
+    }
+    setUser(username);
   };
 
   const handleGenerate = async () => {
@@ -113,7 +145,7 @@ function App() {
     try {
       const res = await fetch(`${API_URL}/generate`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders({ "Content-Type": "application/json" }),
         credentials: "include",
         body: JSON.stringify({ prompt, tone, model }),
       });
@@ -121,6 +153,12 @@ function App() {
       const data = await res.json();
 
       if (!res.ok) {
+        if (res.status === 401) {
+          setError("Not authenticated — please log in");
+          localStorage.removeItem("auth_token");
+          setUser(null);
+          return;
+        }
         setError(data.detail || "Something went wrong while generating the email.");
         return;
       }
@@ -152,11 +190,13 @@ function App() {
     try {
       await fetch(`${API_URL}/auth/logout`, {
         method: "POST",
+        headers: authHeaders(),
         credentials: "include",
       });
     } catch (_err) {
       /* ignore */
     }
+    localStorage.removeItem("auth_token");
     setUser(null);
     setResult(null);
     setHistory([]);
@@ -182,7 +222,7 @@ function App() {
   if (!user) {
     return (
       <div className="app-container">
-        <AuthModal onAuth={setUser} />
+        <AuthModal onAuth={handleAuth} />
       </div>
     );
   }

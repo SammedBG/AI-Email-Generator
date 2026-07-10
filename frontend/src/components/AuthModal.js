@@ -42,7 +42,7 @@ export function AuthModal({ onAuth }) {
         return;
       }
 
-      onAuth(data.username);
+      onAuth(data.username, data.token);
     } catch (_err) {
       setError("Cannot connect to the server. Is the backend running?");
     } finally {

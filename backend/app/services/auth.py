@@ -2,7 +2,7 @@ import bcrypt
 from datetime import datetime, timedelta, timezone
 
 from jose import JWTError, jwt
-from fastapi import Cookie, HTTPException, status
+from fastapi import Cookie, Header, HTTPException, status
 
 from app.config import JWT_ALGORITHM, JWT_EXPIRE_MINUTES, JWT_SECRET
 from app.database import users_collection, is_mongodb_available
@@ -82,15 +82,28 @@ async def login_user(username: str, password: str) -> str:
     return create_token(username_lower)
 
 
-def get_current_user(access_token: str | None = Cookie(default=None)) -> str:
-    """FastAPI dependency — extracts username from the httpOnly cookie."""
-    if not access_token:
+def get_current_user(
+    access_token: str | None = Cookie(default=None),
+    authorization: str | None = Header(default=None),
+) -> str:
+    """FastAPI dependency — extracts username from Bearer header or httpOnly cookie."""
+    token = None
+
+    # 1. Try Authorization header first (works cross-origin on all browsers)
+    if authorization and authorization.lower().startswith("bearer "):
+        token = authorization[7:].strip()
+
+    # 2. Fall back to httpOnly cookie
+    if not token and access_token:
+        token = access_token
+
+    if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated — please log in",
         )
 
-    username = decode_token(access_token)
+    username = decode_token(token)
     if not username:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
