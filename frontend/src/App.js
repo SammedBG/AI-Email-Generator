@@ -39,17 +39,6 @@ function App() {
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(true);
 
-  const validateSession = async () => {
-    const res = await fetch(`${API_URL}/auth/me`, { credentials: "include" });
-    if (!res.ok) {
-      throw new Error(
-        "Login succeeded but your browser did not keep the session cookie. Allow third-party cookies for this site or use the app with frontend/backend on the same domain.",
-      );
-    }
-    const data = await res.json();
-    setUser(data.username);
-  };
-
   // Check if user is already authenticated via cookie
   useEffect(() => {
     const checkAuth = async () => {
@@ -132,9 +121,6 @@ function App() {
       const data = await res.json();
 
       if (!res.ok) {
-        if (res.status === 401) {
-          setUser(null);
-        }
         setError(data.detail || "Something went wrong while generating the email.");
         return;
       }
@@ -196,7 +182,7 @@ function App() {
   if (!user) {
     return (
       <div className="app-container">
-        <AuthModal onAuth={validateSession} />
+        <AuthModal onAuth={setUser} />
       </div>
     );
   }

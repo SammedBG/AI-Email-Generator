@@ -42,11 +42,7 @@ export function AuthModal({ onAuth }) {
         return;
       }
 
-      try {
-        await onAuth();
-      } catch (sessionErr) {
-        setError(sessionErr.message || "Logged in, but session could not be restored.");
-      }
+      onAuth(data.username);
     } catch (_err) {
       setError("Cannot connect to the server. Is the backend running?");
     } finally {
