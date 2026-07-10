@@ -4,7 +4,7 @@ An AI-powered web application that generates professional emails from a simple p
 
 Built as part of the Full Stack AI Developer assignment, updated with advanced features.
 
-###Live on : **https://ai-email-generator-ten-nu.vercel.app/**
+### Live on : **https://ai-email-generator-ten-nu.vercel.app/**
 
 ---
 
