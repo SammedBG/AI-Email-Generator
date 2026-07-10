@@ -35,4 +35,10 @@ cors_raw = os.getenv("CORS_ORIGINS", "http://localhost:3000")
 CORS_ORIGINS = [origin.strip() for origin in cors_raw.split(",") if origin.strip()]
 
 # Cookie Security (Secure attribute for HTTPS)
-COOKIE_SECURE = os.getenv("COOKIE_SECURE", "False").strip().lower() in ("true", "1", "yes")
+cookie_secure_raw = os.getenv("COOKIE_SECURE")
+if cookie_secure_raw is None:
+    COOKIE_SECURE = any(origin.startswith("https://") for origin in CORS_ORIGINS)
+else:
+    COOKIE_SECURE = cookie_secure_raw.strip().lower() in ("true", "1", "yes")
+
+COOKIE_SAMESITE = os.getenv("COOKIE_SAMESITE", "none" if COOKIE_SECURE else "lax").strip().lower()
