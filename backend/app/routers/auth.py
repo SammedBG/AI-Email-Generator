@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, Response
 
+from app.config import COOKIE_SECURE
 from app.schemas import LoginRequest, RegisterRequest, TokenResponse, UserInfo
 from app.services.auth import create_token, get_current_user, login_user, register_user
 
@@ -15,7 +16,7 @@ def _set_token_cookie(response: Response, token: str) -> None:
         value=token,
         httponly=True,
         samesite="lax",
-        secure=False,  # Set True in production with HTTPS
+        secure=COOKIE_SECURE,
         max_age=60 * 60 * 24,  # 24 hours
         path="/",
     )

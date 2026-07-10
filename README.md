@@ -157,6 +157,47 @@ Frontend will run at `http://localhost:3000`.
 
 ---
 
+## 🌐 Production Deployment Instructions
+
+### 1. Database Setup (MongoDB Atlas)
+1. Register a free account at [mongodb.com/atlas](https://www.mongodb.com/cloud/atlas/register).
+2. Create a free shared cluster (M0 tier).
+3. Under **Database Access**, create a user with a secure password.
+4. Under **Network Access**, whitelist `0.0.0.0/0` (access from anywhere) to allow Render's dynamic IPs to connect.
+5. Click **Connect** -> **Connect your application** and copy the connection URI (e.g. `mongodb+srv://<username>:<password>@cluster0.mongodb.net/?retryWrites=true&w=majority`).
+
+### 2. Backend Deployment (Render)
+1. Create a free account at [render.com](https://render.com/).
+2. Click **New +** -> **Web Service** and connect your GitHub repository.
+3. Configure settings:
+   - **Runtime**: `Python`
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `python -m uvicorn main:app --host 0.0.0.0 --port $PORT`
+4. In the **Environment Variables** tab, add:
+   - `GROQ_API_KEY`: *(your actual live Groq key)*
+   - `MONGODB_URL`: *(your Atlas connection URI from Step 1)*
+   - `MONGODB_DB_NAME`: `ai_email_generator`
+   - `JWT_SECRET`: *(a random string, e.g. `9f8e7d6c5b4a3b2c1d0e9f8a7b6c5d`)*
+   - `CORS_ORIGINS`: `https://your-frontend-domain.vercel.app` *(add the domain where you host your React app)*
+
+### 3. Frontend Deployment (Vercel)
+1. Register a free account at [vercel.com](https://vercel.com/).
+2. Click **Add New** -> **Project** and import your repository.
+3. In configure settings:
+   - **Framework Preset**: `Create React App`
+   - **Root Directory**: `frontend`
+4. Expand **Environment Variables** and add:
+   - `REACT_APP_API_URL`: `https://your-backend-domain.onrender.com` *(the public Render URL)*
+5. Click **Deploy**.
+
+---
+
+## 📹 Demo
+
+See attached demo video / screenshots for a walkthrough of the application.
+
+---
+
 ## 👤 Author
 
 Sammed Ghattad

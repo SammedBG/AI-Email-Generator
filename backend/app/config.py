@@ -33,3 +33,6 @@ MONGODB_DB_NAME = os.getenv("MONGODB_DB_NAME", "ai_email_generator").strip()
 # CORS allowed origins
 cors_raw = os.getenv("CORS_ORIGINS", "http://localhost:3000")
 CORS_ORIGINS = [origin.strip() for origin in cors_raw.split(",") if origin.strip()]
+
+# Cookie Security (Secure attribute for HTTPS)
+COOKIE_SECURE = os.getenv("COOKIE_SECURE", "False").strip().lower() in ("true", "1", "yes")
