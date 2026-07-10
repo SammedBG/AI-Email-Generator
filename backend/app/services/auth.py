@@ -5,19 +5,21 @@ from jose import JWTError, jwt
 from fastapi import Cookie, HTTPException, status
 
 from app.config import JWT_ALGORITHM, JWT_EXPIRE_MINUTES, JWT_SECRET
+from app.database import users_collection, is_mongodb_available
 
-# In-memory user store: {username: bytes (hashed_password)}
-users_db: dict[str, bytes] = {}
+# In-memory user store fallback: {username: str (hashed_password)}
+users_db: dict[str, str] = {}
 
 
-def hash_password(password: str) -> bytes:
+def hash_password(password: str) -> str:
     # bcrypt expects bytes for both password and salt
     salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode("utf-8"), salt)
+    hashed_bytes = bcrypt.hashpw(password.encode("utf-8"), salt)
+    return hashed_bytes.decode("utf-8")
 
 
-def verify_password(plain: str, hashed: bytes) -> bool:
-    return bcrypt.checkpw(plain.encode("utf-8"), hashed)
+def verify_password(plain: str, hashed: str) -> bool:
+    return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
 
 
 def create_token(username: str) -> str:
@@ -35,21 +37,41 @@ def decode_token(token: str) -> str | None:
         return None
 
 
-def register_user(username: str, password: str) -> str:
+async def register_user(username: str, password: str) -> str:
     """Register a new user. Returns the JWT token."""
-    if username.lower() in users_db:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Username already taken",
-        )
+    username_lower = username.lower()
+    hashed = hash_password(password)
 
-    users_db[username.lower()] = hash_password(password)
-    return create_token(username.lower())
+    if await is_mongodb_available():
+        existing = await users_collection.find_one({"_id": username_lower})
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Username already taken",
+            )
+        await users_collection.insert_one({"_id": username_lower, "password": hashed})
+    else:
+        if username_lower in users_db:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Username already taken",
+            )
+        users_db[username_lower] = hashed
+
+    return create_token(username_lower)
 
 
-def login_user(username: str, password: str) -> str:
+async def login_user(username: str, password: str) -> str:
     """Authenticate user. Returns the JWT token."""
-    stored_hash = users_db.get(username.lower())
+    username_lower = username.lower()
+    stored_hash = None
+
+    if await is_mongodb_available():
+        user_doc = await users_collection.find_one({"_id": username_lower})
+        if user_doc:
+            stored_hash = user_doc.get("password")
+    else:
+        stored_hash = users_db.get(username_lower)
 
     if not stored_hash or not verify_password(password, stored_hash):
         raise HTTPException(
@@ -57,7 +79,7 @@ def login_user(username: str, password: str) -> str:
             detail="Invalid username or password",
         )
 
-    return create_token(username.lower())
+    return create_token(username_lower)
 
 
 def get_current_user(access_token: str | None = Cookie(default=None)) -> str:
@@ -76,3 +98,4 @@ def get_current_user(access_token: str | None = Cookie(default=None)) -> str:
         )
 
     return username
+
