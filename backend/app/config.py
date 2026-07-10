@@ -22,3 +22,7 @@ AVAILABLE_MODEL_IDS = [m["id"] for m in AVAILABLE_MODELS]
 JWT_SECRET = os.getenv("JWT_SECRET", "ai-email-gen-secret-key-change-in-production")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_MINUTES = 60 * 24  # 24 hours
+
+# MongoDB Configuration
+MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017").strip()
+MONGODB_DB_NAME = os.getenv("MONGODB_DB_NAME", "ai_email_generator").strip()
