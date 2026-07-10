@@ -19,18 +19,42 @@ export function RichTextEditor({ body, subject }) {
 
   useEffect(() => {
     if (body) {
-      // Convert plain text newlines to HTML for the editor
-      const html = body.replace(/\n/g, "<br>");
+      // Split by double newlines to find paragraphs
+      const paragraphs = body.split(/\n\n+/);
+      const html = paragraphs
+        .map((p) => {
+          // Replace single newlines within a paragraph with <br>
+          const line = p.replace(/\n/g, "<br>");
+          return `<p>${line}</p>`;
+        })
+        .join("");
       setContent(html);
     }
   }, [body]);
 
   const handleCopy = async () => {
     try {
-      // Extract plain text from the editor HTML
-      const tempDiv = document.createElement("div");
-      tempDiv.innerHTML = content;
-      const plainText = `Subject: ${subject}\n\n${tempDiv.textContent || tempDiv.innerText}`;
+      let html = content;
+
+      // Convert block tag boundaries and line breaks to newlines
+      html = html.replace(/<\/p>/gi, "\n\n");
+      html = html.replace(/<\/div>/gi, "\n");
+      html = html.replace(/<\/li>/gi, "\n");
+      html = html.replace(/<br\s*\/?>/gi, "\n");
+      html = html.replace(/<\/h[1-6]>/gi, "\n\n");
+
+      // Strip all remaining HTML tags
+      let text = html.replace(/<[^>]+>/g, "");
+
+      // Use a textarea to decode HTML entities (like &nbsp; or &amp;) without collapsing newlines
+      const txt = document.createElement("textarea");
+      txt.innerHTML = text;
+      let decodedText = txt.value;
+
+      // Normalize consecutive newlines and trim whitespace
+      decodedText = decodedText.replace(/\n{3,}/g, "\n\n").trim();
+
+      const plainText = `Subject: ${subject}\n\n${decodedText}`;
       await navigator.clipboard.writeText(plainText);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);

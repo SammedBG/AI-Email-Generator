@@ -9,3 +9,5 @@ python-jose[cryptography]==3.3.0
 motor==3.6.0
 pymongo==4.9.1
 
+certifi>=2024.7.2
+

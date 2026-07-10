@@ -1,12 +1,22 @@
 """MongoDB connection setup and collections initialization."""
 
 import logging
+import certifi
 from motor.motor_asyncio import AsyncIOMotorClient
 from app.config import MONGODB_URL, MONGODB_DB_NAME
 
 logger = logging.getLogger("uvicorn")
 
-client = AsyncIOMotorClient(MONGODB_URL, serverSelectionTimeoutMS=2000)
+try:
+    client = AsyncIOMotorClient(
+        MONGODB_URL,
+        serverSelectionTimeoutMS=2000,
+        tlsCAFile=certifi.where()
+    )
+except Exception as e:
+    logger.warning(f"Could not load certifi certs, initializing default MotorClient: {e}")
+    client = AsyncIOMotorClient(MONGODB_URL, serverSelectionTimeoutMS=2000)
+
 db = client[MONGODB_DB_NAME]
 
 users_collection = db["users"]
