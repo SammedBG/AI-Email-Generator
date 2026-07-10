@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import { EmailHeader } from "./components/EmailHeader";
 import { PromptComposer } from "./components/PromptComposer";
 import { GeneratedEmailCard } from "./components/GeneratedEmailCard";
@@ -214,6 +215,7 @@ function App() {
     return (
       <div className="app-container" style={{ textAlign: "center", paddingTop: "120px" }}>
         <p style={{ color: "#64748b" }}>Loading…</p>
+        <Analytics />
       </div>
     );
   }
@@ -223,6 +225,7 @@ function App() {
     return (
       <div className="app-container">
         <AuthModal onAuth={handleAuth} />
+        <Analytics />
       </div>
     );
   }
@@ -268,6 +271,7 @@ function App() {
       <footer className="app-footer">
         Built with FastAPI, React, and Groq AI.
       </footer>
+      <Analytics />
     </div>
   );
 }
