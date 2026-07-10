@@ -209,18 +209,21 @@ Users provide an email prompt, select the desired tone (Professional, Friendly, 
 
 ### 🤖 3. AI-Generated Email
 The application generates a professional email along with a suitable subject line based on the user's prompt and selected tone.
+
 <img width="501" height="379" alt="image" src="https://github.com/user-attachments/assets/dfcb9f68-0c4d-4335-93b0-5a53116def15" />
 
 ---
 
 ### ✏️ 4. Edit Generated Email
 Users can review and edit the generated email content before copying or using it, allowing them to personalize the final message.
+
 <img width="452" height="296" alt="image" src="https://github.com/user-attachments/assets/7264775e-b96e-4e02-aa71-84e6594b8ce1" />
 
 ---
 
 ### 🕒 5. Email History
 All previously generated emails are stored in the history section, allowing users to revisit, edit, or reuse their past emails whenever needed.
+
 <img width="438" height="164" alt="image" src="https://github.com/user-attachments/assets/b3a255aa-e838-43ac-8fc9-74598ef7d4b5" />
 
 ---
