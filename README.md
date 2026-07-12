@@ -23,6 +23,7 @@ Built as part of the Full Stack AI Developer assignment, updated with advanced f
 - **MongoDB Persistence**: Integrates with a MongoDB database to persist registered user accounts and prompt histories across restarts. **Graceful offline fallback**: if MongoDB is down, the backend automatically detects it and falls back to in-memory dictionaries so the app remains fully functional.
 - **Email Subject Generation**: Auto-generates matching subject lines alongside the email body.
 - **Copy-to-Clipboard**: Copy buttons for both the raw generated email and the rich-text formatted output.
+- **Open in Email Client**: An "Open in Email" button that triggers a `mailto:` link, pre-filling the user's default email client with the generated subject and body.
 - **Quick Example Chips**: Interactive example prompts to populate the composer instantly.
 
 
