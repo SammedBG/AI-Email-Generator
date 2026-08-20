@@ -94,7 +94,7 @@ ai-email-generator/
 
 ### 1. Clone the repository
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/SammedBG/AI-Email-Generator.git
 cd ai-email-generator
 ```
 
