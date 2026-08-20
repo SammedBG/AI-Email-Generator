@@ -1,8 +1,8 @@
 import React from "react";
-import { Check, Copy, Send } from "lucide-react";
+import { Check, Copy, Send, RefreshCw } from "lucide-react";
 import { RichTextEditor } from "./RichTextEditor";
 
-export function GeneratedEmailCard({ result, loading, copied, onCopy }) {
+export function GeneratedEmailCard({ result, loading, copied, onCopy, onRegenerate }) {
   const handleOpenInEmail = () => {
     if (!result) return;
     const subject = encodeURIComponent(result.subject);
@@ -19,7 +19,11 @@ export function GeneratedEmailCard({ result, loading, copied, onCopy }) {
             <div className="card__title">Generated Email</div>
           </div>
           {result && (
-            <div style={{ display: "flex", gap: "8px" }}>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              <button onClick={onRegenerate} className="btn btn--copy" title="Regenerate email using the same settings">
+                <RefreshCw size={14} />
+                Regenerate
+              </button>
               <button onClick={onCopy} className="btn btn--copy">
                 {copied ? <Check size={14} /> : <Copy size={14} />}
                 {copied ? "Copied!" : "Copy"}

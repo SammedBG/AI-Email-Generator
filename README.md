@@ -160,6 +160,39 @@ Frontend will run at `http://localhost:3000`.
 
 ---
 
+## ⚙️ Architecture & How It Works
+
+Here is a high-level sequence flow of how user authentication, email generation, and history tracking are coordinated:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as React Frontend (Vercel)
+    participant API as FastAPI Backend (Render)
+    participant DB as MongoDB Database (Atlas)
+    participant LLM as Groq API (Llama Models)
+
+    User->>API: POST /auth/login (username, password)
+    API->>DB: Check user credentials
+    DB-->>API: Return credentials or error
+    API-->>User: Return JWT token
+
+    User->>API: POST /generate (Prompt, Tone, Model) [Auth: Bearer JWT]
+    API->>API: Validate JWT Token
+    API->>LLM: Call Groq API with prompt engineered template
+    LLM-->>API: Return raw structured output
+    API->>API: Parse SUBJECT and BODY
+    API->>DB: Save prompt, subject, body to history
+    API-->>User: Return parsed Subject + Body
+    
+    User->>API: GET /history [Auth: Bearer JWT]
+    API->>DB: Query last 20 emails for user
+    DB-->>API: Return history list
+    API-->>User: Return history JSON
+```
+
+---
+
 ## 🌐 Production Deployment Instructions
 
 ### 1. Database Setup (MongoDB Atlas)

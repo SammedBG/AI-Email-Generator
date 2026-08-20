@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { Sun, Moon } from "lucide-react";
 import { Analytics } from "@vercel/analytics/react";
 import { EmailHeader } from "./components/EmailHeader";
 import { PromptComposer } from "./components/PromptComposer";
@@ -49,6 +50,19 @@ function App() {
   const [copied, setCopied] = useState(false);
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(true);
+
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem("theme") || "light";
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  };
 
   // Check if user is already authenticated via stored token
   useEffect(() => {
@@ -223,7 +237,14 @@ function App() {
   // Show auth modal if not logged in
   if (!user) {
     return (
-      <div className="app-container">
+      <div className="app-container" style={{ position: "relative" }}>
+        <button
+          onClick={toggleTheme}
+          className="theme-toggle"
+          title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
+        >
+          {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
+        </button>
         <AuthModal onAuth={handleAuth} />
         <Analytics />
       </div>
@@ -231,7 +252,14 @@ function App() {
   }
 
   return (
-    <div className="app-container">
+    <div className="app-container" style={{ position: "relative" }}>
+      <button
+        onClick={toggleTheme}
+        className="theme-toggle"
+        title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
+      >
+        {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
+      </button>
       <EmailHeader user={user} onLogout={handleLogout} />
 
       <PromptComposer
@@ -260,6 +288,7 @@ function App() {
         loading={loading}
         copied={copied}
         onCopy={handleCopy}
+        onRegenerate={handleGenerate}
       />
 
       <PromptHistory

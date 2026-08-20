@@ -33,6 +33,9 @@ export function PromptComposer({
         placeholder="e.g. Write a follow-up email after a job interview"
         className="prompt-textarea"
       />
+      <div className="prompt-counter">
+        {prompt.trim() ? prompt.trim().split(/\s+/).length : 0} {prompt.trim().split(/\s+/).filter(Boolean).length === 1 ? "word" : "words"} | {prompt.length} {prompt.length === 1 ? "character" : "characters"}
+      </div>
 
       <div className="examples">
         {examplePrompts.map((example) => (

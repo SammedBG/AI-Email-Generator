@@ -8,11 +8,11 @@ load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 AI_PROVIDER = os.getenv("AI_PROVIDER", "groq").strip().lower()
-AI_MODEL = os.getenv("AI_MODEL", "llama-3.1-8b-instant").strip()
+AI_MODEL = os.getenv("AI_MODEL", "gpt-oss-120b").strip()
 
 # Available Groq models for multi-model support
 AVAILABLE_MODELS = [
-    {"id": "llama-3.1-8b-instant", "name": "Llama 3.1 8B Instant", "description": "Fast, lightweight — priority model"},
+    {"id": "gpt-oss-120b", "name": "gpt-oss-120b", "description": "Fast, lightweight — priority model"},
     {"id": "llama-3.3-70b-versatile", "name": "Llama 3.3 70B Versatile", "description": "Larger model — higher quality output"},
 ]
 
